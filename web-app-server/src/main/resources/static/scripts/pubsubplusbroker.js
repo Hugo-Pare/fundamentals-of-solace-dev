@@ -146,6 +146,10 @@ class PubSubPlusBroker {
       /*We create a message object, provide it with a destination, and
        *establish the delivery mode. After this, we assign our text message (the "body")
        *to said object*/
+      var message = solace.SolclientFactory.createMessage();
+      message.setDestination(solace.SolclientFactory.createTopicDestination(this.sPublishTopic));
+      message.setDeliveryMode(solace.MessageDeliveryModeType.DIRECT);
+      message.setBinaryAttachment(sBody);
 
       console.debug("Publishing message " + sBody + " to topic " + this.sPublishTopic);
 
@@ -154,8 +158,9 @@ class PubSubPlusBroker {
        */
       try {
         //send the actual message and log a successful send
-        //oResultCallback(true, "message published!");
-        //console.debug("message published");
+        this.broker.session.send(message);
+        oResultCallback(true, "message published!");
+        console.debug("message published");
       } catch (error) {
 
         //there was an error with the send()
@@ -191,6 +196,14 @@ class PubSubPlusBroker {
          *-CorrelationKey that is used in events
          *-How long to block the execution thread, in milliseconds
          */
+
+         this.broker.session.subscribe(
+          // add subscription
+          solace.SolclientFactory.createTopic(this.sSubscribeTopic),
+          this.GENERATE_SUBSCRIBE_EVENT,
+          this.sSubscribeTopic,
+          this.BLOCK_SUBSCRIBER_TIMEOUT_MS
+         );
         
       } catch (error) {
         console.error("Could not subscribe to topic. ->" + error.message);
